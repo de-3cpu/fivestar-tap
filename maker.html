@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>FiveStar Link Maker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #10151f 0%, #1c2739 100%);
+    color: #fff;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+  }
+  .card { width: 100%; max-width: 420px; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  p.sub { color: #9fb0c8; margin-bottom: 24px; font-size: 0.95rem; }
+  label { display: block; font-size: 0.85rem; color: #9fb0c8; margin: 14px 0 6px; }
+  input {
+    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #33405a;
+    background: #1a2233; color: #fff; font-size: 1rem;
+  }
+  input:focus { outline: none; border-color: #f5b301; }
+  button {
+    width: 100%; padding: 16px; margin-top: 18px; border: none; border-radius: 14px;
+    background: #f5b301; color: #10151f; font-size: 1.05rem; font-weight: 700;
+  }
+  button:active { filter: brightness(0.9); }
+  button:disabled { opacity: 0.5; }
+  .result { margin-top: 20px; display: none; }
+  .venue {
+    background: #1a2233; border: 1px solid #33405a; border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px; font-size: 0.9rem;
+  }
+  .venue .vname { font-weight: 700; font-size: 1rem; }
+  .venue .vaddr { color: #9fb0c8; margin-top: 2px; }
+  .venue.pick { cursor: pointer; }
+  .venue.pick:active { border-color: #f5b301; }
+  .linkbox {
+    background: #0d1119; border: 1px dashed #33405a; border-radius: 12px;
+    padding: 12px; font-size: 0.75rem; word-break: break-all; color: #cdd8e8;
+    margin-bottom: 10px;
+  }
+  .copybtn { background: #25D366; color: #fff; margin-top: 4px; }
+  .copied { background: #34E0A1; color: #10151f; }
+  .err { color: #ff8a80; margin-top: 14px; font-size: 0.9rem; display: none; }
+  .testlink { display: block; text-align: center; color: #f5b301; margin-top: 14px; font-size: 0.9rem; }
+  footer { margin-top: 28px; font-size: 0.8rem; color: #66788f; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>FiveStar Link Maker</h1>
+    <p class="sub">Type the venue name, get the card link. TripAdvisor box only for bundle sales.</p>
+
+    <label for="q">Venue name (add the town, e.g. "Tony's Pizzeria Qawra")</label>
+    <input id="q" type="text" autocomplete="off" placeholder="Restaurant name + town">
+
+    <label for="ta">TripAdvisor page link (optional â€” bundle only)</label>
+    <input id="ta" type="url" autocomplete="off" placeholder="https://www.tripadvisor.com/...">
+
+    <button id="go">Find venue &amp; make link</button>
+    <div class="err" id="err"></div>
+
+    <div class="result" id="result"></div>
+
+    <footer>FiveStar Malta â€” internal tool</footer>
+  </div>
+
+<script>
+  // Searches Google Places (key restricted to this site), lets 47 pick the right
+  // match, and builds the choice-page URL that goes on the NFC card.
+  const API_KEY = "AIzaSyBI2VcPWkihRv6QLDVQKbUYDubqirqL5eM";
+  const PAGE_BASE = "https://de-3cpu.github.io/fivestar-tap/";
+
+  const $ = id => document.getElementById(id);
+
+  async function search() {
+    const q = $("q").value.trim();
+    $("err").style.display = "none";
+    $("result").style.display = "none";
+    if (!q) { showErr("Type the venue name first."); return; }
+    $("go").disabled = true;
+    $("go").textContent = "Searchingâ€¦";
+    try {
+      const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": API_KEY,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress"
+        },
+        body: JSON.stringify({ textQuery: q + ", Malta", maxResultCount: 5 })
+      });
+      if (!res.ok) throw new Error("Google said no (" + res.status + ")");
+      const data = await res.json();
+      const places = data.places || [];
+      if (!places.length) { showErr("Nothing found â€” try adding the town or checking spelling."); return; }
+      showChoices(places);
+    } catch (e) {
+      showErr("Search failed: " + e.message + ". Check your internet and try again.");
+    } finally {
+      $("go").disabled = false;
+      $("go").textContent = "Find venue & make link";
+    }
+  }
+
+  function showChoices(places) {
+    const box = $("result");
+    box.innerHTML = "<label>Tap the right venue:</label>";
+    places.forEach(p => {
+      const d = document.createElement("div");
+      d.className = "venue pick";
+      d.innerHTML = "<div class='vname'></div><div class='vaddr'></div>";
+      d.querySelector(".vname").textContent = p.displayName.text;
+      d.querySelector(".vaddr").textContent = p.formattedAddress;
+      d.onclick = () => showLink(p);
+      box.appendChild(d);
+    });
+    box.style.display = "block";
+  }
+
+  function showLink(p) {
+    let url = PAGE_BASE + "?g=" + encodeURIComponent(p.id) +
+              "&n=" + encodeURIComponent(p.displayName.text);
+    const ta = $("ta").value.trim();
+    if (ta) {
+      if (!/^https:\/\/(www\.)?tripadvisor\./.test(ta)) {
+        showErr("That TripAdvisor link doesn't look right â€” it must start with https://www.tripadvisor.â€¦");
+        return;
+      }
+      url += "&t=" + encodeURIComponent(ta);
+    }
+    const box = $("result");
+    box.innerHTML =
+      "<div class='venue'><div class='vname'></div><div class='vaddr'></div></div>" +
+      "<label>Card link" + (ta ? " (Google + TripAdvisor + WhatsApp)" : " (Google + WhatsApp)") + ":</label>" +
+      "<div class='linkbox' id='linkbox'></div>" +
+      "<button class='copybtn' id='copy'>Copy link</button>" +
+      "<a class='testlink' id='test' target='_blank'>Preview the page first</a>";
+    box.querySelector(".vname").textContent = p.displayName.text;
+    box.querySelector(".vaddr").textContent = p.formattedAddress;
+    $("linkbox").textContent = url;
+    $("test").href = url;
+    $("copy").onclick = async () => {
+      await navigator.clipboard.writeText(url);
+      $("copy").textContent = "Copied â€” paste it into NFC Tools";
+      $("copy").classList.add("copied");
+    };
+    box.style.display = "block";
+  }
+
+  function showErr(msg) { $("err").textContent = msg; $("err").style.display = "block"; }
+
+  $("go").onclick = search;
+  $("q").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+</script>
+</body>
+</html>
