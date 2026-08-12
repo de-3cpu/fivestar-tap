@@ -21,7 +21,16 @@
     max-width: 380px;
     text-align: center;
   }
-  h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  h1 { font-size: 1.1rem; font-weight: 500; color: #cdd8e8; margin-bottom: 4px; }
+  .venuename {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #f5b301;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 18px rgba(245, 179, 1, 0.35);
+    display: none;
+  }
   p.sub { color: #9fb0c8; margin-bottom: 32px; font-size: 1rem; }
   a.btn {
     display: flex;
@@ -51,6 +60,7 @@
 <body>
   <div class="card">
     <h1 id="title">Thanks for tapping!</h1>
+    <div class="venuename" id="venue"></div>
     <p class="sub">What would you like to do?</p>
 
     <a class="btn review" id="reviewBtn" href="#">
@@ -82,7 +92,12 @@
   const placeId = params.get("g");
   const name = params.get("n");
 
-  if (name) document.getElementById("title").textContent = "Thanks for visiting " + name + "!";
+  if (name) {
+    document.getElementById("title").textContent = "Thanks for visiting";
+    const v = document.getElementById("venue");
+    v.textContent = name;
+    v.style.display = "block";
+  }
 
   const reviewBtn = document.getElementById("reviewBtn");
   if (placeId) {
