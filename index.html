@@ -87,10 +87,20 @@
   // WhatsApp number is fixed (the owner's) — international format, digits only.
   const WHATSAPP_NUMBER = "35699050971";
   const WHATSAPP_TEXT = "Hi FiveStar Malta! I saw one of your review cards and I'm interested.";
+  const TAP_HOST = "https://tap.fivestar-malta.com/hit";
 
   const params = new URLSearchParams(location.search);
   const placeId = params.get("g");
   const name = params.get("n");
+
+  function trackTap(dest) {
+    if (!placeId) return;
+    const q = "?g=" + encodeURIComponent(placeId) +
+              "&n=" + encodeURIComponent(name || "") +
+              (dest ? "&dest=" + dest : "");
+    navigator.sendBeacon(TAP_HOST + q);
+  }
+  trackTap();
 
   if (name) {
     document.getElementById("title").textContent = "Thanks for visiting";
@@ -102,6 +112,7 @@
   const reviewBtn = document.getElementById("reviewBtn");
   if (placeId) {
     reviewBtn.href = "https://search.google.com/local/writereview?placeid=" + encodeURIComponent(placeId);
+    reviewBtn.addEventListener("click", () => trackTap("g"));
   } else {
     reviewBtn.style.display = "none";
   }
@@ -111,6 +122,7 @@
     const taBtn = document.getElementById("taBtn");
     taBtn.href = taUrl;
     taBtn.style.display = "flex";
+    taBtn.addEventListener("click", () => trackTap("t"));
   }
 
   document.getElementById("waBtn").href =
