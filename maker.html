@@ -1,163 +1,316 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>FiveStar Link Maker</title>
+<link rel="manifest" href="/maker-manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="theme-color" content="#10151f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Link Maker">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(160deg, #10151f 0%, #1c2739 100%);
-    color: #fff;
-    padding: 24px;
-    display: flex;
-    justify-content: center;
+  :root{
+    --bg:#0d1119;
+    --surface:#161d2b;
+    --surface-2:#1c2438;
+    --border:#2a3450;
+    --border-soft:#1f2740;
+    --text:#eef2f9;
+    --text-muted:#8fa0bd;
+    --text-dim:#5b6b89;
+    --accent:#f5b301;
+    --accent-ink:#1a1304;
+    --accent-dim:#241c05;
+    --tripadvisor:#26c98f;
   }
-  .card { width: 100%; max-width: 420px; }
-  h1 { font-size: 1.4rem; margin-bottom: 4px; }
-  p.sub { color: #9fb0c8; margin-bottom: 24px; font-size: 0.95rem; }
-  label { display: block; font-size: 0.85rem; color: #9fb0c8; margin: 14px 0 6px; }
-  input {
-    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #33405a;
-    background: #1a2233; color: #fff; font-size: 1rem;
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:28px 16px 56px;
+    -webkit-font-smoothing:antialiased;
   }
-  input:focus { outline: none; border-color: #f5b301; }
-  button {
-    width: 100%; padding: 16px; margin-top: 18px; border: none; border-radius: 14px;
-    background: #f5b301; color: #10151f; font-size: 1.05rem; font-weight: 700;
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+  button{font-family:inherit;}
+  input{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  [hidden]{display:none !important;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:baseline;gap:9px;}
+  .brand .mark{font-family:"Manrope",sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-0.01em;}
+  .brand .mark .dot{color:var(--accent);}
+  .relock-btn{
+    display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
+    color:var(--text-muted);border-radius:100px;padding:6px 12px;font-size:.78rem;cursor:pointer;
   }
-  button:active { filter: brightness(0.9); }
-  button:disabled { opacity: 0.5; }
-  .result { margin-top: 20px; display: none; }
-  .venue {
-    background: #1a2233; border: 1px solid #33405a; border-radius: 12px;
-    padding: 12px 14px; margin-bottom: 10px; font-size: 0.9rem;
+  .relock-btn svg{width:12px;height:12px;}
+
+  .panel{
+    border:1px solid var(--border);border-radius:14px;background:var(--surface);
+    padding:18px;display:flex;flex-direction:column;gap:12px;
   }
-  .venue .vname { font-weight: 700; font-size: 1rem; }
-  .venue .vaddr { color: #9fb0c8; margin-top: 2px; }
-  .venue.pick { cursor: pointer; }
-  .venue.pick:active { border-color: #f5b301; }
-  .linkbox {
-    background: #0d1119; border: 1px dashed #33405a; border-radius: 12px;
-    padding: 12px; font-size: 0.75rem; word-break: break-all; color: #cdd8e8;
-    margin-bottom: 10px;
+  .panel h2{font-family:"Manrope",sans-serif;font-size:.95rem;font-weight:700;margin:0;}
+  .panel .hint{font-size:.78rem;color:var(--text-dim);}
+
+  .field-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .field{flex:1;min-width:160px;display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;}
+  .field input{
+    background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);
+    padding:9px 11px;font-size:.9rem;width:100%;
   }
-  .copybtn { background: #25D366; color: #fff; margin-top: 4px; }
-  .copied { background: #34E0A1; color: #10151f; }
-  .err { color: #ff8a80; margin-top: 14px; font-size: 0.9rem; display: none; }
-  .testlink { display: block; text-align: center; color: #f5b301; margin-top: 14px; font-size: 0.9rem; }
-  footer { margin-top: 28px; font-size: 0.8rem; color: #66788f; text-align: center; }
+  .btn{
+    border:none;border-radius:9px;padding:9px 16px;font-size:.85rem;font-weight:700;cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn.primary{background:var(--accent);color:var(--accent-ink);}
+  .btn.primary:disabled{opacity:.5;cursor:default;}
+  .btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border-soft);}
+  .btn.whatsapp{background:#25D366;color:#fff;}
+
+  .candidates{display:flex;flex-direction:column;gap:6px;}
+  .candidate{
+    display:flex;flex-direction:column;gap:2px;text-align:left;
+    background:var(--bg);border:1px solid var(--border);border-radius:9px;
+    padding:9px 11px;cursor:pointer;
+  }
+  .candidate:hover{border-color:var(--accent-dim);background:var(--accent-dim);}
+  .candidate .cname{font-weight:600;font-size:.88rem;}
+  .candidate .caddr{font-size:.76rem;color:var(--text-muted);}
+
+  .link-box{
+    background:var(--bg);border:1px dashed var(--border);border-radius:9px;
+    padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:#cdd8e8;
+    word-break:break-all;
+  }
+  .status-msg{font-size:.82rem;}
+  .status-msg.err{color:#e5637a;}
+
+  /* lock screen (same treatment as the tap tracker) */
+  .lock-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+  .lock-card{width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+  .lock-icon{
+    width:52px;height:52px;border-radius:16px;background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--accent);
+  }
+  .lock-icon svg{width:22px;height:22px;}
+  .lock-card h1{font-family:"Manrope",sans-serif;font-size:1.15rem;font-weight:800;margin:0;}
+  .lock-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+  .lock-form{width:100%;display:flex;flex-direction:column;gap:10px;}
+  .lock-form input{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);
+    padding:12px 14px;font-size:1rem;text-align:center;letter-spacing:.05em;width:100%;
+  }
+
+  footer{margin-top:4px;font-size:.78rem;color:var(--text-dim);text-align:center;}
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>FiveStar Link Maker <span style="color:#ff69b4">Drusilla</span></h1>
-    <p class="sub">Type the venue name, get the card link. TripAdvisor box only for bundle sales.</p>
 
-    <label for="q">Venue name (add the town, e.g. "Tony's Pizzeria Qawra")</label>
-    <input id="q" type="text" autocomplete="off" placeholder="Restaurant name + town">
+<div class="lock-wrap" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <h1>FiveStar Link Maker</h1>
+    <p>Enter the passphrase to make card links.</p>
+    <form class="lock-form" id="lockForm">
+      <input id="passInput" type="password" inputmode="text" placeholder="Passphrase" autocomplete="off" autofocus>
+      <button class="btn primary" type="submit">Unlock</button>
+    </form>
+    <div class="status-msg err" id="lockError"></div>
+  </div>
+</div>
 
-    <label for="ta">TripAdvisor page link (optional â€” bundle only)</label>
-    <input id="ta" type="url" autocomplete="off" placeholder="https://www.tripadvisor.com/...">
-
-    <button id="go">Find venue &amp; make link</button>
-    <div class="err" id="err"></div>
-
-    <div class="result" id="result"></div>
-
-    <footer>FiveStar Malta â€” internal tool</footer>
+<div class="wrap" id="app" hidden>
+  <div class="topbar">
+    <div class="brand"><div class="mark">FiveStar <span class="dot">·</span> Link Maker</div></div>
+    <button class="relock-btn" id="relockBtn" type="button" title="Lock this device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Lock</button>
   </div>
 
+  <div class="panel">
+    <h2>Make a card link</h2>
+    <div class="hint">Type the venue name, get the card link. TripAdvisor box only for bundle sales.</div>
+    <div id="body"></div>
+  </div>
+
+  <footer>FiveStar Malta — internal tool</footer>
+</div>
+
 <script>
-  // Searches Google Places (key restricted to this site), lets 47 pick the right
-  // match, and builds the choice-page URL that goes on the NFC card.
-  const API_KEY = "AIzaSyCMceI2JZxYcsqmYadGz-eD4GpPSWbmjNI";
-  const PAGE_BASE = "https://fivestar-malta.com/";
+  const API_BASE = "https://tap.fivestar-malta.com";
+  const CARD_BASE = "https://fivestar-malta.com/";
+  const ADMIN_STORAGE_KEY = "fivestar_admin_key";
 
-  const $ = id => document.getElementById(id);
+  let pickedPlace = null;
 
-  async function search() {
-    const q = $("q").value.trim();
-    $("err").style.display = "none";
-    $("result").style.display = "none";
-    if (!q) { showErr("Type the venue name first."); return; }
-    $("go").disabled = true;
-    $("go").textContent = "Searchingâ€¦";
+  function getAdminKey(){ return localStorage.getItem(ADMIN_STORAGE_KEY); }
+  function setAdminKey(k){ localStorage.setItem(ADMIN_STORAGE_KEY, k); }
+  function clearAdminKey(){ localStorage.removeItem(ADMIN_STORAGE_KEY); }
+
+  function showLockScreen(errorMsg){
+    document.getElementById("app").hidden = true;
+    document.getElementById("lockScreen").hidden = false;
+    document.getElementById("lockError").textContent = errorMsg || "";
+    document.getElementById("passInput").value = "";
+    document.getElementById("passInput").focus();
+  }
+  function showApp(){
+    document.getElementById("lockScreen").hidden = true;
+    document.getElementById("app").hidden = false;
+  }
+
+  async function tryUnlock(key){
+    const res = await fetch(API_BASE + "/auth", { headers: { "X-Admin-Key": key } });
+    if (res.status === 401) return false;
+    if (!res.ok) throw new Error("offline");
+    setAdminKey(key);
+    showApp();
+    return true;
+  }
+
+  document.getElementById("lockForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const key = document.getElementById("passInput").value.trim();
+    if (!key) return;
     try {
-      const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": API_KEY,
-          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress"
-        },
-        body: JSON.stringify({ textQuery: q + ", Malta", maxResultCount: 5 })
-      });
-      if (!res.ok) throw new Error("Google said no (" + res.status + ")");
-      const data = await res.json();
-      const places = data.places || [];
-      if (!places.length) { showErr("Nothing found â€” try adding the town or checking spelling."); return; }
-      showChoices(places);
+      const ok = await tryUnlock(key);
+      if (!ok) showLockScreen("Wrong passphrase — try again.");
     } catch (e) {
-      showErr("Search failed: " + e.message + ". Check your internet and try again.");
-    } finally {
-      $("go").disabled = false;
-      $("go").textContent = "Find venue & make link";
+      showLockScreen("Can't reach the server right now — try again shortly.");
     }
+  });
+
+  document.getElementById("relockBtn").addEventListener("click", function(){
+    clearAdminKey();
+    showLockScreen("");
+  });
+
+  async function adminFetch(path, opts){
+    opts = opts || {};
+    const key = getAdminKey();
+    opts.headers = Object.assign({}, opts.headers, { "X-Admin-Key": key });
+    const res = await fetch(API_BASE + path, opts);
+    if (res.status === 401) {
+      clearAdminKey();
+      showLockScreen("Your session was locked — enter the passphrase again.");
+      return { ok: false, aborted: true };
+    }
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok || !data.ok) return { ok: false, error: data.error || "Something went wrong." };
+    return { ok: true, data: data };
   }
 
-  function showChoices(places) {
-    const box = $("result");
-    box.innerHTML = "<label>Tap the right venue:</label>";
-    places.forEach(p => {
-      const d = document.createElement("div");
-      d.className = "venue pick";
-      d.innerHTML = "<div class='vname'></div><div class='vaddr'></div>";
-      d.querySelector(".vname").textContent = p.displayName.text;
-      d.querySelector(".vaddr").textContent = p.formattedAddress;
-      d.onclick = () => showLink(p);
-      box.appendChild(d);
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
-    box.style.display = "block";
   }
 
-  function showLink(p) {
-    let url = PAGE_BASE + "?g=" + encodeURIComponent(p.id) +
-              "&n=" + encodeURIComponent(p.displayName.text);
-    const ta = $("ta").value.trim();
-    if (ta) {
-      if (!/^https:\/\/(www\.)?tripadvisor\./.test(ta)) {
-        showErr("That TripAdvisor link doesn't look right â€” it must start with https://www.tripadvisor.â€¦");
-        return;
-      }
-      url += "&t=" + encodeURIComponent(ta);
+  function renderBody(){
+    const body = document.getElementById("body");
+    if (!pickedPlace) {
+      body.innerHTML =
+        '<div class="field-row">' +
+          '<div class="field"><label for="searchInput">Venue name</label>' +
+          '<input id="searchInput" type="text" placeholder="e.g. Tony&#39;s Pizzeria Qawra" autocomplete="off"></div>' +
+          '<div style="align-self:flex-end;"><button class="btn primary" id="searchBtn" type="button">Search</button></div>' +
+        '</div>' +
+        '<div class="candidates" id="candidates"></div>' +
+        '<div class="status-msg" id="searchStatus"></div>';
+      document.getElementById("searchBtn").addEventListener("click", doSearch);
+      document.getElementById("searchInput").addEventListener("keydown", function(e){ if (e.key === "Enter") doSearch(); });
+    } else {
+      body.innerHTML =
+        '<div class="candidate" style="cursor:default;"><div class="cname">' + escapeHtml(pickedPlace.name) + '</div></div>' +
+        '<div class="field-row">' +
+          '<div class="field"><label for="taInput">TripAdvisor link (optional — bundle only)</label>' +
+          '<input id="taInput" type="url" placeholder="https://www.tripadvisor.com/..."></div>' +
+        '</div>' +
+        '<div class="field-row">' +
+          '<button class="btn primary" id="makeBtn" type="button">Make link</button>' +
+          '<button class="btn ghost" id="backBtn" type="button">Back to search</button>' +
+        '</div>' +
+        '<div id="linkArea"></div>';
+      document.getElementById("makeBtn").addEventListener("click", doMakeLink);
+      document.getElementById("backBtn").addEventListener("click", function(){ pickedPlace = null; renderBody(); });
     }
-    const box = $("result");
-    box.innerHTML =
-      "<div class='venue'><div class='vname'></div><div class='vaddr'></div></div>" +
-      "<label>Card link" + (ta ? " (Google + TripAdvisor + WhatsApp)" : " (Google + WhatsApp)") + ":</label>" +
-      "<div class='linkbox' id='linkbox'></div>" +
-      "<button class='copybtn' id='copy'>Copy link</button>" +
-      "<a class='testlink' id='test' target='_blank'>Preview the page first</a>";
-    box.querySelector(".vname").textContent = p.displayName.text;
-    box.querySelector(".vaddr").textContent = p.formattedAddress;
-    $("linkbox").textContent = url;
-    $("test").href = url;
-    $("copy").onclick = async () => {
-      await navigator.clipboard.writeText(url);
-      $("copy").textContent = "Copied â€” paste it into NFC Tools";
-      $("copy").classList.add("copied");
-    };
-    box.style.display = "block";
   }
 
-  function showErr(msg) { $("err").textContent = msg; $("err").style.display = "block"; }
+  async function doSearch(){
+    const q = document.getElementById("searchInput").value.trim();
+    const statusEl = document.getElementById("searchStatus");
+    const candEl = document.getElementById("candidates");
+    statusEl.className = "status-msg";
+    statusEl.textContent = "";
+    if (!q) { statusEl.className = "status-msg err"; statusEl.textContent = "Type the venue name first."; return; }
+    const btn = document.getElementById("searchBtn");
+    btn.disabled = true;
+    btn.textContent = "Searching…";
+    const result = await adminFetch("/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: q }),
+    });
+    btn.disabled = false;
+    btn.textContent = "Search";
+    if (!result.ok) {
+      if (result.aborted) return;
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Search failed: " + result.error + ". Check your internet and try again.";
+      return;
+    }
+    const places = result.data.places || [];
+    if (!places.length) { statusEl.className = "status-msg err"; statusEl.textContent = "Nothing found — try adding the town or checking spelling."; candEl.innerHTML = ""; return; }
+    candEl.innerHTML = "";
+    places.forEach(function(p){
+      const div = document.createElement("div");
+      div.className = "candidate";
+      div.innerHTML = '<div class="cname">' + escapeHtml(p.displayName.text) + '</div><div class="caddr">' + escapeHtml(p.formattedAddress) + '</div>';
+      div.addEventListener("click", function(){
+        pickedPlace = { id: p.id, name: p.displayName.text };
+        renderBody();
+      });
+      candEl.appendChild(div);
+    });
+  }
 
-  $("go").onclick = search;
-  $("q").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+  function doMakeLink(){
+    const taUrl = document.getElementById("taInput").value.trim();
+    const linkArea = document.getElementById("linkArea");
+    if (taUrl && !/^https:\/\/(www\.)?tripadvisor\./.test(taUrl)) {
+      linkArea.innerHTML = '<div class="status-msg err">That TripAdvisor link doesn\'t look right — it must start with https://www.tripadvisor....</div>';
+      return;
+    }
+    let url = CARD_BASE + "?g=" + encodeURIComponent(pickedPlace.id) + "&n=" + encodeURIComponent(pickedPlace.name);
+    if (taUrl) url += "&t=" + encodeURIComponent(taUrl);
+    linkArea.innerHTML =
+      '<div class="link-box" id="linkBox">' + escapeHtml(url) + '</div>' +
+      '<div class="field-row" style="margin-top:10px;">' +
+        '<button class="btn whatsapp" id="copyBtn" type="button">Copy link</button>' +
+        '<a class="btn ghost" id="previewLink" href="' + url + '" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;">Preview the page</a>' +
+      '</div>';
+    document.getElementById("copyBtn").addEventListener("click", function(){
+      navigator.clipboard.writeText(url);
+      this.textContent = "Copied — paste it into NFC Tools";
+    });
+  }
+
+  if (getAdminKey()) {
+    fetch(API_BASE + "/auth", { headers: { "X-Admin-Key": getAdminKey() } }).then(function(res){
+      if (res.ok) showApp(); else { clearAdminKey(); showLockScreen(""); }
+    }).catch(function(){ showApp(); });
+  } else {
+    showLockScreen("");
+  }
+  renderBody();
 </script>
 </body>
 </html>
